@@ -2,6 +2,7 @@ package com.adrianrusso.partyplayer.Activites;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -23,12 +24,13 @@ import com.spotify.sdk.android.auth.AuthorizationClient;
 import com.spotify.sdk.android.auth.AuthorizationRequest;
 import com.spotify.sdk.android.auth.AuthorizationResponse;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Scanner;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.models.Track;
@@ -40,7 +42,7 @@ import retrofit.client.Response;
 public class HostActivity extends AppCompatActivity {
 
   private static final String REDIRECT_URI = "https://localhost:8080";
-  private static String CLIENT_ID;
+  private static String clientId;
   private static final int REQUEST_CODE = 1337;
 
   private static SpotifyAppRemote mSpotifyAppRemote;
@@ -55,11 +57,13 @@ public class HostActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_host);
 
+    clientId = getClientId();
+
     api = new SpotifyApi();
     room = Room.newRoom();
     requestStrings = new ArrayList<>();
     listView = findViewById(R.id.requestList);
-    getClientId();
+
     updateAccessToken();
 
     String stringText = "Room Code: " + room.getCode();
@@ -102,21 +106,20 @@ public class HostActivity extends AppCompatActivity {
     listView.setOnItemClickListener((parent, view, position, id) -> mSpotifyAppRemote.getPlayerApi().play("spotify:track:" + room.getRequests().get(position).getTrack().id));
   }
 
-  private void getClientId() {
-    Scanner myReader;
-    try {
-      myReader = new Scanner(new File("C:\\Users\\adria\\AndroidStudioProjects\\PartyPlayer\\app\\client_id.txt"));
-      CLIENT_ID = myReader.nextLine();
-      myReader.close();
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
+  public String getClientId() {
+    try (BufferedReader reader = new BufferedReader(
+            new InputStreamReader(getAssets().open("client_id.txt"), StandardCharsets.UTF_8))) {
+
+      return reader.readLine();
+    } catch (IOException e) {
+      return null;
     }
   }
 
   @Override
   protected void onStart() {
     super.onStart();
-    SpotifyAppRemote.connect(this, new ConnectionParams.Builder(CLIENT_ID).setRedirectUri(REDIRECT_URI).showAuthView(true).build(), new Connector.ConnectionListener() {
+    SpotifyAppRemote.connect(this, new ConnectionParams.Builder(clientId).setRedirectUri(REDIRECT_URI).showAuthView(true).build(), new Connector.ConnectionListener() {
 
       @Override
       public void onConnected(SpotifyAppRemote spotifyAppRemote) {
@@ -130,7 +133,7 @@ public class HostActivity extends AppCompatActivity {
   }
 
   public void updateAccessToken() {
-    AuthorizationClient.openLoginActivity(this, REQUEST_CODE, new AuthorizationRequest.Builder(CLIENT_ID, AuthorizationResponse.Type.TOKEN, REDIRECT_URI).build());
+    AuthorizationClient.openLoginActivity(this, REQUEST_CODE, new AuthorizationRequest.Builder(clientId, AuthorizationResponse.Type.TOKEN, REDIRECT_URI).build());
   }
 
   protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -139,9 +142,11 @@ public class HostActivity extends AppCompatActivity {
       AuthorizationResponse response = AuthorizationClient.getResponse(resultCode, intent);
       switch (response.getType()) {
         case TOKEN:
+          Log.d("mine", "here");
           api.setAccessToken(response.getAccessToken());
           break;
         case ERROR:
+          Log.d("mine", "her2e");
           break;
       }
     }
