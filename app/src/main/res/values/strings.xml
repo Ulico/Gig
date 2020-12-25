@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">SpotifyPlayer</string>
+    <string name="search">Search:</string>
+    <string name="room_code">Room Code:</string>
+    <string name="join">Join</string>
+    <string name="send">Send</string>
+    <string name="host">Host</string>
+</resources>
