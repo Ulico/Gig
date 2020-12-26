@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -107,8 +108,13 @@ public class HostActivity extends AppCompatActivity {
       public void onCancelled(@NonNull DatabaseError error) {
       }
     });
-
-    listView.setOnItemClickListener((parent, view, position, id) -> mSpotifyAppRemote.getPlayerApi().play("spotify:track:" + room.getRequests().get(position).getTrack().id));
+    listView.setOnItemClickListener((parent, view, position, id) -> {
+      try {
+        mSpotifyAppRemote.getPlayerApi().play("spotify:track:" + room.getRequests().get(position).getTrack().id);
+      } catch (NullPointerException e) {
+        Toast.makeText(HostActivity.this, "Failed to play: Spotify cannot be found on this device.", Toast.LENGTH_SHORT).show();
+      }
+    });
   }
 
   public String getClientId() {
@@ -146,6 +152,7 @@ public class HostActivity extends AppCompatActivity {
 
       @Override
       public void onFailure(Throwable throwable) {
+        Toast.makeText(HostActivity.this, "WARNING: Spotify is not installed on this device.", Toast.LENGTH_SHORT).show();
       }
     });
   }
@@ -170,7 +177,7 @@ public class HostActivity extends AppCompatActivity {
 
   @Override
   protected void onStop() {
-    room.destroy();
     super.onStop();
+    room.destroy();
   }
 }
