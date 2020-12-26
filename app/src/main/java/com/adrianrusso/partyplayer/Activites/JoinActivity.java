@@ -37,7 +37,7 @@ public class JoinActivity extends AppCompatActivity {
       database.getReference("/rooms").addListenerForSingleValueEvent(new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot snapshot) {
-          if (snapshot.child(enteredCode).exists()) {
+          if (snapshot.hasChild(enteredCode)) {
             room = snapshot.child(enteredCode).getValue(Room.class);
             Toast.makeText(JoinActivity.this, "Joined room.", Toast.LENGTH_SHORT).show();
           } else {
@@ -55,7 +55,7 @@ public class JoinActivity extends AppCompatActivity {
     send.setOnClickListener(v -> database.getReference("/rooms").addListenerForSingleValueEvent(new ValueEventListener() {
       @Override
       public void onDataChange(@NonNull DataSnapshot snapshot) {
-        if (snapshot.child(room.getCode()).exists()) {
+        if (snapshot.hasChild(room.getCode())) {
           room.addRequest(requestEntry.getText().toString());
         } else {
           Toast.makeText(JoinActivity.this, "Room not found.", Toast.LENGTH_SHORT).show();

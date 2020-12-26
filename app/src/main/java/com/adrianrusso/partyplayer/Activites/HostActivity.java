@@ -2,21 +2,21 @@ package com.adrianrusso.partyplayer.Activites;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.adrianrusso.partyplayer.Modules.Request;
 import com.adrianrusso.partyplayer.Modules.Room;
 import com.adrianrusso.partyplayer.R;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
@@ -69,37 +69,42 @@ public class HostActivity extends AppCompatActivity {
     String stringText = "Room Code: " + room.getCode();
     ((TextView) findViewById(R.id.roomCode)).setText(stringText);
 
-    FirebaseDatabase.getInstance().getReference("rooms/" + room.getCode()).addValueEventListener(new ValueEventListener() {
+    FirebaseDatabase.getInstance().getReference("rooms/" + room.getCode() + "/requests").addChildEventListener(new ChildEventListener() {
       @Override
-      public void onDataChange(@NonNull DataSnapshot snapshot) {
-        if (snapshot.exists()) {
-          room = snapshot.getValue(Room.class);
-          for (int i = 0; i < Objects.requireNonNull(room).getRequests().size(); i++) {
-            Request r = room.getRequests().get(i);
-            if (r.getTrack() == null) {
-              int finalI = i;
-              api.getService().searchTracks(r.getQuery(), new Callback<TracksPager>() {
-                @Override
-                public void success(TracksPager tracksPager, Response response) {
-                  Track track = tracksPager.tracks.items.get(0);
-                  r.setTrack(track);
-                  requestStrings.add(r.formattedString());
-                  snapshot.child("/requests/" + finalI + "/track").getRef().setValue(track);
-                  listView.setAdapter(new ArrayAdapter<>(HostActivity.this, android.R.layout.simple_list_item_1, requestStrings));
-                }
-
-                @Override
-                public void failure(RetrofitError error) {
-                }
-              });
-            }
+      public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+        Request r = snapshot.getValue(Request.class);
+        api.getService().searchTracks(Objects.requireNonNull(r).getQuery(), new Callback<TracksPager>() {
+          @Override
+          public void success(TracksPager tracksPager, Response response) {
+            Track track = tracksPager.tracks.items.get(0);
+            r.setTrack(track);
+            addRequestToList(r);
+            snapshot.child("/track").getRef().setValue(track);
           }
-        }
+
+          @Override
+          public void failure(RetrofitError error) {
+          }
+        });
+      }
+
+      @Override
+      public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+      }
+
+      @Override
+      public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+        removeRequestFromList(snapshot.getValue(Request.class));
+      }
+
+      @Override
+      public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
       }
 
       @Override
       public void onCancelled(@NonNull DatabaseError error) {
-
       }
     });
 
@@ -107,13 +112,26 @@ public class HostActivity extends AppCompatActivity {
   }
 
   public String getClientId() {
-    try (BufferedReader reader = new BufferedReader(
-            new InputStreamReader(getAssets().open("client_id.txt"), StandardCharsets.UTF_8))) {
-
+    try {
+      InputStreamReader inputStreamReader = new InputStreamReader(getAssets().open("client_id.txt"), StandardCharsets.UTF_8);
+      BufferedReader reader = new BufferedReader(inputStreamReader);
       return reader.readLine();
     } catch (IOException e) {
+      e.printStackTrace();
       return null;
     }
+  }
+
+  public void addRequestToList(Request r) {
+    room.getRequests().add(r);
+    requestStrings.add(r.formattedString());
+    listView.setAdapter(new ArrayAdapter<>(HostActivity.this, android.R.layout.simple_list_item_1, requestStrings));
+  }
+
+  public void removeRequestFromList(Request r) {
+    room.getRequests().remove(r);
+    requestStrings.remove(r.formattedString());
+    listView.setAdapter(new ArrayAdapter<>(HostActivity.this, android.R.layout.simple_list_item_1, requestStrings));
   }
 
   @Override
@@ -142,11 +160,9 @@ public class HostActivity extends AppCompatActivity {
       AuthorizationResponse response = AuthorizationClient.getResponse(resultCode, intent);
       switch (response.getType()) {
         case TOKEN:
-          Log.d("mine", "here");
           api.setAccessToken(response.getAccessToken());
           break;
         case ERROR:
-          Log.d("mine", "her2e");
           break;
       }
     }

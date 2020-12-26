@@ -6,11 +6,6 @@ public class Request {
 
   private String query;
   private int votes;
-
-  public void setTrack(Track track) {
-    this.track = track;
-  }
-
   private Track track;
 
   public Request(String query) {
@@ -35,6 +30,10 @@ public class Request {
 
   public Track getTrack() {
     return track;
+  }
+
+  public void setTrack(Track track) {
+    this.track = track;
   }
 
   public String formattedString() {
