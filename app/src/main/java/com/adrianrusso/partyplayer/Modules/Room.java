@@ -15,7 +15,7 @@ public class Room {
   public static Room newRoom() {
     Room r = new Room();
     r.setCode(RandomStringUtils.randomAlphabetic(4).toUpperCase());
-    r.sync();
+    r.syncToDatabase();
     return r;
   }
 
@@ -29,7 +29,7 @@ public class Room {
     return code;
   }
 
-  public void sync() {
+  public void syncToDatabase() {
     FirebaseDatabase.getInstance().getReference("rooms/" + code).setValue(this);
   }
 
