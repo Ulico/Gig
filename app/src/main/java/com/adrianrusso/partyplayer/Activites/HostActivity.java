@@ -43,9 +43,9 @@ import retrofit.client.Response;
 public class HostActivity extends AppCompatActivity {
 
   private static final String REDIRECT_URI = "https://localhost:8080";
-  private static String clientId;
   private static final int REQUEST_CODE = 1337;
 
+  private static String clientId;
   private static SpotifyAppRemote mSpotifyAppRemote;
   private static Room room;
   private static List<String> requestStrings;
@@ -59,34 +59,41 @@ public class HostActivity extends AppCompatActivity {
     setContentView(R.layout.activity_host);
 
     clientId = getClientId();
-
     api = new SpotifyApi();
     room = Room.newRoom();
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
     requestStrings = new ArrayList<>();
-    listView = findViewById(R.id.requestList);
+
+    listView = findViewById(R.id.requestListHost);
+    TextView roomCode = findViewById(R.id.roomCode);
 
     updateAccessToken();
 
     String stringText = "Room Code: " + room.getCode();
-    ((TextView) findViewById(R.id.roomCode)).setText(stringText);
+    roomCode.setText(stringText);
 
-    FirebaseDatabase.getInstance().getReference("rooms/" + room.getCode() + "/requests").addChildEventListener(new ChildEventListener() {
+    database.getReference("rooms/" + room.getCode() + "/requests").addChildEventListener(new ChildEventListener() {
       @Override
       public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-        Request r = snapshot.getValue(Request.class);
-        api.getService().searchTracks(Objects.requireNonNull(r).getQuery(), new Callback<TracksPager>() {
-          @Override
-          public void success(TracksPager tracksPager, Response response) {
-            Track track = tracksPager.tracks.items.get(0);
-            r.setTrack(track);
-            addRequestToList(r);
-            snapshot.child("/track").getRef().setValue(track);
-          }
+        Request r = Objects.requireNonNull(snapshot.getValue(Request.class));
+        if (r.getTrack() == null) {
+          api.getService().searchTracks(r.getQuery(), new Callback<TracksPager>() {
+            @Override
+            public void success(TracksPager tracksPager, Response response) {
+              Track track = tracksPager.tracks.items.get(0);
+              r.setTrack(track);
+              addRequestToList(r);
+              snapshot.child("/track").getRef().setValue(track);
+            }
 
-          @Override
-          public void failure(RetrofitError error) {
-          }
-        });
+            @Override
+            public void failure(RetrofitError error) {
+            }
+          });
+        } else {
+          requestStrings.add(r.formattedString());
+          listView.setAdapter(new ArrayAdapter<>(HostActivity.this, android.R.layout.simple_list_item_1, requestStrings));
+        }
       }
 
       @Override
@@ -173,6 +180,12 @@ public class HostActivity extends AppCompatActivity {
           break;
       }
     }
+  }
+
+  @Override
+  protected void onRestart() {
+    super.onRestart();
+    room.syncToDatabase();
   }
 
   @Override
