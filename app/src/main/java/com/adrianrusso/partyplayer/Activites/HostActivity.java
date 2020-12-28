@@ -67,7 +67,7 @@ public class HostActivity extends AppCompatActivity {
     listView = findViewById(R.id.requestListHost);
     TextView roomCode = findViewById(R.id.roomCode);
 
-    updateAccessToken();
+    AuthorizationClient.openLoginActivity(this, REQUEST_CODE, new AuthorizationRequest.Builder(clientId, AuthorizationResponse.Type.TOKEN, REDIRECT_URI).build());
 
     String stringText = "Room Code: " + room.getCode();
     roomCode.setText(stringText);
@@ -164,9 +164,6 @@ public class HostActivity extends AppCompatActivity {
     });
   }
 
-  public void updateAccessToken() {
-    AuthorizationClient.openLoginActivity(this, REQUEST_CODE, new AuthorizationRequest.Builder(clientId, AuthorizationResponse.Type.TOKEN, REDIRECT_URI).build());
-  }
 
   protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
     super.onActivityResult(requestCode, resultCode, intent);
