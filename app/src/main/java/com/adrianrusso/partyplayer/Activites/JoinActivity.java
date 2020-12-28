@@ -27,8 +27,8 @@ import java.util.Objects;
 public class JoinActivity extends AppCompatActivity {
 
   private EditText codeEntry, requestEntry;
-  private Room room;
-  private FirebaseDatabase database;
+  private static Room room;
+  private static FirebaseDatabase database;
   private ListView listView;
   private static List<String> requestStrings;
 
