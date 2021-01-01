@@ -10,10 +10,12 @@ import java.util.List;
 public class Room {
 
   private String code;
+  private int size;
   private final List<Request> requests;
 
   public static Room newRoom() {
     Room r = new Room();
+    r.setSize(1);
     r.setCode(RandomStringUtils.randomAlphabetic(4).toUpperCase());
     r.syncToDatabase();
     return r;
@@ -47,5 +49,21 @@ public class Room {
 
   public void setCode(String code) {
     this.code = code;
+  }
+
+  public int getSize() {
+    return size;
+  }
+
+  public void addPerson() {
+    size++;
+  }
+
+  public void removePerson() {
+    size--;
+  }
+
+  public void setSize(int size) {
+    this.size = size;
   }
 }

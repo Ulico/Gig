@@ -49,39 +49,23 @@ public class JoinActivity extends AppCompatActivity {
       String enteredCode = codeEntry.getText().toString();
       if (room != null && enteredCode.equals(room.getCode())) {
         Toast.makeText(this, "Already in room.", Toast.LENGTH_SHORT).show();
-        return;
+      } else {
+        joinRoom(enteredCode);
       }
-
-      database.getReference("/rooms").addListenerForSingleValueEvent(new ValueEventListener() {
-        @Override
-        public void onDataChange(@NonNull DataSnapshot snapshot) {
-          if (snapshot.hasChild(enteredCode)) {
-            Toast.makeText(JoinActivity.this, "Joined room.", Toast.LENGTH_SHORT).show();
-            room = snapshot.child(enteredCode).getValue(Room.class);
-            for (Request r : Objects.requireNonNull(room).getRequests()) {
-              if (r.getTrack() != null)
-                requestStrings.add(r.formattedString());
-            }
-            listView.setAdapter(new ArrayAdapter<>(JoinActivity.this, android.R.layout.simple_list_item_1, requestStrings));
-
-            database.getReference("rooms/" + room.getCode() + "/requests").addChildEventListener(listener);
-          } else {
-            Toast.makeText(JoinActivity.this, "Room not found.", Toast.LENGTH_SHORT).show();
-          }
-        }
-
-        @Override
-        public void onCancelled(@NonNull DatabaseError error) {
-
-        }
-      });
     });
 
     send.setOnClickListener(v -> database.getReference("/rooms").addListenerForSingleValueEvent(new ValueEventListener() {
       @Override
       public void onDataChange(@NonNull DataSnapshot snapshot) {
+        String query = requestEntry.getText().toString();
         if (snapshot.hasChild(room.getCode())) {
-          room.addRequest(requestEntry.getText().toString());
+          for (DataSnapshot request : snapshot.child(room.getCode()).child("requests").getChildren()) {
+            if (request.child("query").getValue(String.class).equals(query)) {
+              Toast.makeText(JoinActivity.this, "Request already exists.", Toast.LENGTH_SHORT).show();
+              return;
+            }
+          }
+          room.addRequest(query);
         } else {
           Toast.makeText(JoinActivity.this, "Room not found.", Toast.LENGTH_SHORT).show();
         }
@@ -107,7 +91,11 @@ public class JoinActivity extends AppCompatActivity {
 
     @Override
     public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-      removeRequestFromList(snapshot.getValue(Request.class));
+      Request r = snapshot.getValue(Request.class);
+      if (r.getTrack() != null)
+        removeRequestFromList(r);
+      else
+        Toast.makeText(JoinActivity.this, "Request already exists.", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -121,8 +109,40 @@ public class JoinActivity extends AppCompatActivity {
     }
   };
 
+  private void joinRoom(String code) {
+    database.getReference("/rooms").addListenerForSingleValueEvent(new ValueEventListener() {
+      @Override
+      public void onDataChange(@NonNull DataSnapshot snapshot) {
+        if (snapshot.hasChild(code)) {
+          Toast.makeText(JoinActivity.this, "Joined room.", Toast.LENGTH_SHORT).show();
+          room = snapshot.child(code).getValue(Room.class);
+          room.addPerson();
+          room.syncToDatabase();
+          for (Request r : Objects.requireNonNull(room).getRequests()) {
+            if (r.getTrack() != null)
+              requestStrings.add(r.formattedString());
+          }
+          listView.setAdapter(new ArrayAdapter<>(JoinActivity.this, android.R.layout.simple_list_item_1, requestStrings));
+
+          database.getReference("rooms/" + room.getCode() + "/requests").addChildEventListener(listener);
+        } else {
+          Toast.makeText(JoinActivity.this, "Room not found.", Toast.LENGTH_SHORT).show();
+        }
+      }
+
+      @Override
+      public void onCancelled(@NonNull DatabaseError error) {
+
+      }
+    });
+  }
+
   public void addRequestToList(Request r) {
-    room.getRequests().add(r);
+    for (int i = 0; i < room.getRequests().size(); i++) {
+      if (room.getRequests().get(i).getQuery().equals(r.getQuery())) {
+        room.getRequests().set(i, r);
+      }
+    }
     requestStrings.add(r.formattedString());
     listView.setAdapter(new ArrayAdapter<>(JoinActivity.this, android.R.layout.simple_list_item_1, requestStrings));
   }
@@ -137,7 +157,7 @@ public class JoinActivity extends AppCompatActivity {
   protected void onStart() {
     super.onStart();
     if (room != null) {
-      database.getReference("rooms/" + room.getCode() + "/requests").addChildEventListener(listener);
+      joinRoom(room.getCode());
     }
   }
 
@@ -146,6 +166,8 @@ public class JoinActivity extends AppCompatActivity {
     super.onStop();
     if (room != null) {
       database.getReference("rooms/" + room.getCode() + "/requests").removeEventListener(listener);
+      room.removePerson();
+      room.syncToDatabase();
     }
   }
 }

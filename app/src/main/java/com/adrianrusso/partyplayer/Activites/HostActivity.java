@@ -2,6 +2,7 @@ package com.adrianrusso.partyplayer.Activites;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -82,8 +83,17 @@ public class HostActivity extends AppCompatActivity {
             public void success(TracksPager tracksPager, Response response) {
               Track track = tracksPager.tracks.items.get(0);
               r.setTrack(track);
+              for (Request r : room.getRequests()) {
+                Log.d("mine", r.getTrack().name + ", " + track.name);
+                if (r.getTrack().name.equals(track.name)) {
+
+                  snapshot.getRef().removeValue();
+                  return;
+                }
+              }
               addRequestToList(r);
-              snapshot.child("/track").getRef().setValue(track);
+
+              snapshot.child("track").getRef().setValue(track);
             }
 
             @Override
@@ -103,7 +113,9 @@ public class HostActivity extends AppCompatActivity {
 
       @Override
       public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-        removeRequestFromList(snapshot.getValue(Request.class));
+        Request r = snapshot.getValue(Request.class);
+        if (r.getTrack() != null)
+          removeRequestFromList(r);
       }
 
       @Override
