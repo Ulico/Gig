@@ -2,7 +2,6 @@ package com.adrianrusso.partyplayer.Activites;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -84,9 +83,7 @@ public class HostActivity extends AppCompatActivity {
               Track track = tracksPager.tracks.items.get(0);
               r.setTrack(track);
               for (Request r : room.getRequests()) {
-                Log.d("mine", r.getTrack().name + ", " + track.name);
                 if (r.getTrack().name.equals(track.name)) {
-
                   snapshot.getRef().removeValue();
                   return;
                 }
