@@ -2,10 +2,13 @@ package com.adrianrusso.partyplayer.Activites;
 
 import android.os.Bundle;
 import android.text.InputFilter;
+import android.util.Log;
+import android.view.Gravity;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -24,6 +27,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class JoinActivity extends AppCompatActivity {
@@ -31,6 +35,7 @@ public class JoinActivity extends AppCompatActivity {
   private static Room room;
   private static FirebaseDatabase database;
   private ListView listView;
+  private TextView size;
   private static List<String> requestStrings;
   private static AlertDialog sendRequestAlert, joinAlert;
 
@@ -42,6 +47,7 @@ public class JoinActivity extends AppCompatActivity {
     Button join = findViewById(R.id.join);
     Button send = findViewById(R.id.sendRequest);
     listView = findViewById(R.id.requestListJoin);
+    size = findViewById(R.id.size);
     database = FirebaseDatabase.getInstance();
     requestStrings = new ArrayList<>();
 
@@ -54,10 +60,10 @@ public class JoinActivity extends AppCompatActivity {
 
   private AlertDialog getJoinAlert() {
     AlertDialog.Builder alert = new AlertDialog.Builder(this);
-    alert.setMessage("Enter room code");
+    alert.setMessage("Enter room code:");
     final EditText input = new EditText(this);
-    input.setFilters(new InputFilter[] {new InputFilter.AllCaps()});
-    alert.setView(input);
+    input.setFilters(new InputFilter[]{new InputFilter.AllCaps(), new InputFilter.LengthFilter(4)});
+    input.setGravity(Gravity.CENTER);
     alert.setPositiveButton("Ok", (dialog, whichButton) -> {
       String enteredCode = input.getText().toString();
       if (room != null && enteredCode.equals(room.getCode())) {
@@ -65,23 +71,23 @@ public class JoinActivity extends AppCompatActivity {
       } else {
         joinRoom(enteredCode);
       }
-
     });
 
     alert.setNegativeButton("Cancel", (dialog, whichButton) -> {
     });
-    return alert.create();
+    AlertDialog a = alert.create();
+    a.setView(input, 50, 0, 50, 0);
+    return a;
   }
 
 
   private AlertDialog getSendRequestAlert() {
     AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-    alert.setMessage("Enter request");
+    alert.setMessage("Enter request:");
 
     final EditText input = new EditText(this);
-    alert.setView(input);
-
+    input.setGravity(Gravity.CENTER);
     alert.setPositiveButton("Ok", (dialog, whichButton) -> {
       if (room == null) {
         Toast.makeText(this, "Please join room.", Toast.LENGTH_SHORT).show();
@@ -90,6 +96,7 @@ public class JoinActivity extends AppCompatActivity {
           @Override
           public void onDataChange(@NonNull DataSnapshot snapshot) {
             String query = input.getText().toString();
+            input.setText("");
             if (snapshot.hasChild(room.getCode())) {
               for (DataSnapshot request : snapshot.child(room.getCode()).child("requests").getChildren()) {
                 if (request.child("query").getValue(String.class).equals(query)) {
@@ -113,7 +120,9 @@ public class JoinActivity extends AppCompatActivity {
 
     alert.setNegativeButton("Cancel", (dialog, whichButton) -> {
     });
-    return alert.create();
+    AlertDialog a = alert.create();
+    a.setView(input, 50, 0, 50, 0);
+    return a;
   }
 
   ChildEventListener listener = new ChildEventListener() {
@@ -163,6 +172,23 @@ public class JoinActivity extends AppCompatActivity {
           listView.setAdapter(new ArrayAdapter<>(JoinActivity.this, android.R.layout.simple_list_item_1, requestStrings));
 
           database.getReference("rooms/" + room.getCode() + "/requests").addChildEventListener(listener);
+
+          database.getReference("rooms/" + room.getCode() + "/size").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+              if (!snapshot.exists()) {
+                room = null;
+                size.setText("");
+              } else {
+                size.setText(String.format(Locale.US, "%d", snapshot.getValue(Integer.class)));
+              }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+          });
         } else {
           Toast.makeText(JoinActivity.this, "Room not found.", Toast.LENGTH_SHORT).show();
         }
@@ -176,7 +202,9 @@ public class JoinActivity extends AppCompatActivity {
   }
 
   public void addRequestToList(Request r) {
+
     for (int i = 0; i < room.getRequests().size(); i++) {
+      Log.d("mine", room.getRequests().get(i).getQuery());
       if (room.getRequests().get(i).getQuery().equals(r.getQuery())) {
         room.getRequests().set(i, r);
       }
