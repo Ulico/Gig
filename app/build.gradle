@@ -35,7 +35,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.apache.commons:commons-lang3:3.9'
+    implementation 'org.apache.commons:commons-lang3:3.11'
     implementation 'com.spotify.android:auth:1.2.3'
     implementation 'com.github.kaaes:spotify-web-api-android:0.4.1'
     implementation 'androidx.appcompat:appcompat:1.2.0'
