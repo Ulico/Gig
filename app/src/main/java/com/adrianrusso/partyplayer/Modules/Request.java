@@ -37,6 +37,10 @@ public class Request {
   }
 
   public String formattedString() {
-    return String.format("%s (%s)", track.name, track.artists.get(0).name);
+    return track == null ? "" : String.format("%s (%s)", track.name, track.artists.get(0).name);
+  }
+
+  public void setVotes(int votes) {
+    this.votes = votes;
   }
 }

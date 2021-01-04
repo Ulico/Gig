@@ -2,7 +2,6 @@ package com.adrianrusso.partyplayer.Activites;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -11,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.adrianrusso.partyplayer.Adapters.RequestListAdapter;
 import com.adrianrusso.partyplayer.Modules.Request;
 import com.adrianrusso.partyplayer.Modules.Room;
 import com.adrianrusso.partyplayer.R;
@@ -30,8 +30,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -50,11 +48,10 @@ public class HostActivity extends AppCompatActivity {
   private static String clientId;
   private static SpotifyAppRemote mSpotifyAppRemote;
   private static Room room;
-  private static List<String> requestStrings;
   private static SpotifyApi api;
 
-  private ListView listView;
   private TextView size;
+  private RequestListAdapter requestListAdapter;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -66,12 +63,14 @@ public class HostActivity extends AppCompatActivity {
     room = Room.newRoom();
     size = findViewById(R.id.size);
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    requestStrings = new ArrayList<>();
+    requestListAdapter = new RequestListAdapter(this, R.layout.adapter_view_layout, room.getRequests());
 
     size.setText("1");
 
-    listView = findViewById(R.id.requestListHost);
+    ListView listView = findViewById(R.id.requestListHost);
     TextView roomCode = findViewById(R.id.roomCode);
+
+    listView.setAdapter(requestListAdapter);
 
     AuthorizationClient.openLoginActivity(this, REQUEST_CODE, new AuthorizationRequest.Builder(clientId, AuthorizationResponse.Type.TOKEN, REDIRECT_URI).build());
 
@@ -104,19 +103,27 @@ public class HostActivity extends AppCompatActivity {
             }
           });
         } else {
-          requestStrings.add(r.formattedString());
-          listView.setAdapter(new ArrayAdapter<>(HostActivity.this, android.R.layout.simple_list_item_1, requestStrings));
+          requestListAdapter.notifyDataSetChanged();
         }
       }
 
       @Override
       public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
+        Request r = snapshot.getValue(Request.class);
+        for (int i = 0; i < room.getRequests().size(); i++) {
+          assert r != null;
+          if (room.getRequests().get(i).getQuery().equals(r.getQuery())) {
+            room.getRequests().set(i, r);
+            requestListAdapter.notifyDataSetChanged();
+            return;
+          }
+        }
       }
 
       @Override
       public void onChildRemoved(@NonNull DataSnapshot snapshot) {
         Request r = snapshot.getValue(Request.class);
+        assert r != null;
         if (r.getTrack() != null)
           removeRequestFromList(r);
       }
@@ -165,14 +172,12 @@ public class HostActivity extends AppCompatActivity {
 
   public void addRequestToList(Request r) {
     room.getRequests().add(r);
-    requestStrings.add(r.formattedString());
-    listView.setAdapter(new ArrayAdapter<>(HostActivity.this, android.R.layout.simple_list_item_1, requestStrings));
+    requestListAdapter.notifyDataSetChanged();
   }
 
   public void removeRequestFromList(Request r) {
     room.getRequests().remove(r);
-    requestStrings.remove(r.formattedString());
-    listView.setAdapter(new ArrayAdapter<>(HostActivity.this, android.R.layout.simple_list_item_1, requestStrings));
+    requestListAdapter.notifyDataSetChanged();
   }
 
   @Override
