@@ -115,8 +115,8 @@ public class HostActivity extends AppCompatActivity {
           if (r.getVotes() >= room.getVotePercentToPlay() * room.getSize()) {
             playOrCue(r.getTrack());
           }
+          requestListAdapter.notifyDataSetChanged();
         }
-        requestListAdapter.notifyDataSetChanged();
       }
 
       @Override

@@ -87,8 +87,6 @@ public class JoinActivity extends AppCompatActivity {
       }
     });
 
-    alert.setNegativeButton("Cancel", (dialog, whichButton) -> {
-    });
     AlertDialog a = alert.create();
     a.setView(input, 50, 0, 50, 0);
     return a;
@@ -131,8 +129,6 @@ public class JoinActivity extends AppCompatActivity {
       }
     });
 
-    alert.setNegativeButton("Cancel", (dialog, whichButton) -> {
-    });
     AlertDialog a = alert.create();
     a.setView(input, 50, 0, 50, 0);
     return a;
