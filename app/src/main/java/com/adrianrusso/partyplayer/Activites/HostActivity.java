@@ -77,7 +77,7 @@ public class HostActivity extends AppCompatActivity {
     String stringText = "Room Code: " + room.getCode();
     roomCode.setText(stringText);
 
-    database.getReference("rooms/" + room.getCode() + "/requests").addChildEventListener(new ChildEventListener() {
+    database.getReference("rooms").child(room.getCode()).child("requests").addChildEventListener(new ChildEventListener() {
       @Override
       public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
         Request r = Objects.requireNonNull(snapshot.getValue(Request.class));
@@ -146,7 +146,7 @@ public class HostActivity extends AppCompatActivity {
       }
     });
 
-    database.getReference("rooms/" + room.getCode() + "/size").addValueEventListener(new ValueEventListener() {
+    database.getReference("rooms").child(room.getCode()).child("size").addValueEventListener(new ValueEventListener() {
       @Override
       public void onDataChange(@NonNull DataSnapshot snapshot) {
         size.setText(String.format(Locale.US, "%d", snapshot.getValue(Integer.class)));
