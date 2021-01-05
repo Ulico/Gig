@@ -1,4 +1,4 @@
-package com.adrianrusso.partyplayer.Adapters;
+package com.adrianrusso.gig.Adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -10,8 +10,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.adrianrusso.partyplayer.Modules.Request;
-import com.adrianrusso.partyplayer.R;
+import com.adrianrusso.gig.Modules.Request;
+import com.adrianrusso.gig.R;
 
 import java.util.List;
 

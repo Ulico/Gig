@@ -1,4 +1,4 @@
-package com.adrianrusso.partyplayer.Modules;
+package com.adrianrusso.gig.Modules;
 
 import com.google.firebase.database.FirebaseDatabase;
 

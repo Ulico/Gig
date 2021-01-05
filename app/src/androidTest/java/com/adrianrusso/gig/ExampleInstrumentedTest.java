@@ -1,4 +1,4 @@
-package com.adrianrusso.partyplayer;
+package com.adrianrusso.gig;
 
 import android.content.Context;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
   public void useAppContext() {
     // Context of the app under test.
     Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-    assertEquals("com.adrianrusso.partyplayer", appContext.getPackageName());
+    assertEquals("com.adrianrusso.gig", appContext.getPackageName());
   }
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.adrianrusso.partyplayer">
+    package="com.adrianrusso.gig">
 
     <application
         android:allowBackup="true"
@@ -10,18 +10,18 @@
         android:roundIcon="@mipmap/ic_launcher_round"
 
         android:supportsRtl="true"
-        android:theme="@style/Theme.PartyPlayer"
+        android:theme="@style/Theme.gig"
         tools:ignore="AllowBackup">
         <activity
-            android:name="com.adrianrusso.partyplayer.Activites.JoinActivity"
+            android:name="com.adrianrusso.gig.Activites.JoinActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait" />
         <activity
-            android:name="com.adrianrusso.partyplayer.Activites.HostActivity"
+            android:name="com.adrianrusso.gig.Activites.HostActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait" />
         <activity
-            android:name="com.adrianrusso.partyplayer.Activites.MainActivity"
+            android:name="com.adrianrusso.gig.Activites.MainActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait">
             <intent-filter>

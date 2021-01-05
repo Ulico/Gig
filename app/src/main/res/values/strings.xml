@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PartyPlayer</string>
+    <string name="app_name">Gig</string>
     <string name="search">Search:</string>
     <string name="room_code">Room Code:</string>
     <string name="join">Join</string>

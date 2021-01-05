@@ -1,4 +1,4 @@
-package com.adrianrusso.partyplayer.Activites;
+package com.adrianrusso.gig.Activites;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,10 +10,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.adrianrusso.partyplayer.Adapters.RequestListAdapter;
-import com.adrianrusso.partyplayer.Modules.Request;
-import com.adrianrusso.partyplayer.Modules.Room;
-import com.adrianrusso.partyplayer.R;
+import com.adrianrusso.gig.Adapters.RequestListAdapter;
+import com.adrianrusso.gig.Modules.Request;
+import com.adrianrusso.gig.Modules.Room;
+import com.adrianrusso.gig.R;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;

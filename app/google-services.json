@@ -1,34 +1,41 @@
 {
   "project_info": {
-    "project_number": "1063810250705",
-    "firebase_url": "https://spotifyplayer-e2b33-default-rtdb.firebaseio.com",
-    "project_id": "spotifyplayer-e2b33",
-    "storage_bucket": "spotifyplayer-e2b33.appspot.com"
+    "project_number": "113545502619",
+    "project_id": "gigapp-c04fa",
+    "storage_bucket": "gigapp-c04fa.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1063810250705:android:bd06b498ad4e1c960692f0",
+        "mobilesdk_app_id": "1:113545502619:android:1b0d9acf7a4017c15f0b3e",
         "android_client_info": {
-          "package_name": "com.adrianrusso.partyplayer"
+          "package_name": "com.adrianrusso.gig"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1063810250705-fnlcu7qo0u03ujhoh8mflub9g8d5828g.apps.googleusercontent.com",
+          "client_id": "113545502619-arf4oojnnb5vaar6oml8g9fb7itvbime.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.adrianrusso.gig",
+            "certificate_hash": "1a60211288d09dfa239fbfb3c987554c0972e886"
+          }
+        },
+        {
+          "client_id": "113545502619-gbr0oktfdvbbep6t1evhpgmq6g8mc7jm.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDsg6zY_p2ZbIuXsPQmWBUsZojzQStXpT8"
+          "current_key": "AIzaSyCHpfpegsj_vEhgxspNkHy816biSsJVbCQ"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1063810250705-fnlcu7qo0u03ujhoh8mflub9g8d5828g.apps.googleusercontent.com",
+              "client_id": "113545502619-gbr0oktfdvbbep6t1evhpgmq6g8mc7jm.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

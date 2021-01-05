@@ -1,4 +1,4 @@
-package com.adrianrusso.partyplayer;
+package com.adrianrusso.gig;
 
 import org.junit.Test;
 
