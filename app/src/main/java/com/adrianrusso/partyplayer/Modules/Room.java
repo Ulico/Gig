@@ -57,6 +57,7 @@ public class Room {
 
   public void addPerson() {
     size++;
+    syncToDatabase();
   }
 
   public void removePerson() {
