@@ -14,19 +14,21 @@ public class Room {
   private final List<Request> requests;
   private double votePercentToPlay;
 
+  public final static double DEFAULT_VOTE_PERCENT_TO_PLAY = 0.5;
+
   public static Room newRoom() {
     Room r = new Room();
     r.setSize(1);
     r.setCode(RandomStringUtils.randomAlphabetic(4).toUpperCase());
     r.syncToDatabase();
-    r.setVotePercentToPlay(0.6);
+    r.setVotePercentToPlay(DEFAULT_VOTE_PERCENT_TO_PLAY);
     return r;
   }
 
   public void addRequest(String query) {
     Request request = new Request(query);
     requests.add(request);
-    FirebaseDatabase.getInstance().getReference("rooms/" + code + "/requests/" + (requests.size() - 1)).setValue(request);
+    FirebaseDatabase.getInstance().getReference("rooms").child(code).child("requests").child(String.valueOf(requests.size() - 1)).setValue(request);
   }
 
   public String getCode() {
@@ -34,7 +36,7 @@ public class Room {
   }
 
   public void syncToDatabase() {
-    FirebaseDatabase.getInstance().getReference("rooms/" + code).setValue(this);
+    FirebaseDatabase.getInstance().getReference("rooms").child(code).setValue(this);
   }
 
   public List<Request> getRequests() {
@@ -42,7 +44,7 @@ public class Room {
   }
 
   public void destroy() {
-    FirebaseDatabase.getInstance().getReference("rooms/" + code).removeValue();
+    FirebaseDatabase.getInstance().getReference("rooms").child(code).removeValue();
   }
 
   public Room() {
