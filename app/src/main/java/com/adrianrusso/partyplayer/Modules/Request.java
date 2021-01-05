@@ -39,7 +39,7 @@ public class Request {
   }
 
   public String formattedString() {
-    return track == null ? "Loading..." : String.format("%s (%s)", track.name, track.artists.get(0).name);
+    return track == null ? "Loading..." : String.format("%s\n(%s)", track.name, track.artists.get(0).name);
   }
 
   public void setVotes(int votes) {
