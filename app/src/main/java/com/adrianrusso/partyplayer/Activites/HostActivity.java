@@ -110,14 +110,13 @@ public class HostActivity extends AppCompatActivity {
       @Override
       public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
         Request r = snapshot.getValue(Request.class);
-        for (int i = 0; i < room.getRequests().size(); i++) {
-          assert r != null;
-          if (room.getRequests().get(i).getQuery().equals(r.getQuery())) {
-            room.getRequests().set(i, r);
-            requestListAdapter.notifyDataSetChanged();
-            return;
+        if (room.getRequests().contains(r)) {
+          room.getRequests().set(room.getRequests().indexOf(r), r);
+          if (r.getVotes() >= room.getVotePercentToPlay() * room.getSize()) {
+            playOrCue(r.getTrack());
           }
         }
+        requestListAdapter.notifyDataSetChanged();
       }
 
       @Override
@@ -138,17 +137,12 @@ public class HostActivity extends AppCompatActivity {
       }
     });
 
-    listView.setOnItemClickListener((parent, view, position, id) -> {
-      try {
-        mSpotifyAppRemote.getPlayerApi().play("spotify:track:" + room.getRequests().get(position).getTrack().id);
-      } catch (NullPointerException e) {
-        Toast.makeText(HostActivity.this, "Failed to play: Spotify cannot be found on this device.", Toast.LENGTH_SHORT).show();
-      }
-    });
+    listView.setOnItemClickListener((parent, view, position, id) -> playOrCue(room.getRequests().get(position).getTrack()));
 
     database.getReference("rooms").child(room.getCode()).child("size").addValueEventListener(new ValueEventListener() {
       @Override
       public void onDataChange(@NonNull DataSnapshot snapshot) {
+        room.setSize(snapshot.getValue(Integer.class));
         size.setText(String.format(Locale.US, "%d", snapshot.getValue(Integer.class)));
       }
 
@@ -193,6 +187,20 @@ public class HostActivity extends AppCompatActivity {
       @Override
       public void onFailure(Throwable throwable) {
         Toast.makeText(HostActivity.this, "WARNING: Spotify is not installed on this device.", Toast.LENGTH_SHORT).show();
+      }
+    });
+  }
+
+  private void playOrCue(Track track) {
+    mSpotifyAppRemote.getPlayerApi().getPlayerState().setResultCallback(playerState -> {
+      try {
+        if (playerState.isPaused) {
+          mSpotifyAppRemote.getPlayerApi().play("spotify:track:" + track.id);
+        } else {
+          mSpotifyAppRemote.getPlayerApi().queue("spotify:track:" + track.id);
+        }
+      } catch (NullPointerException e) {
+        Toast.makeText(HostActivity.this, "Failed to play: Spotify cannot be found on this device.", Toast.LENGTH_SHORT).show();
       }
     });
   }

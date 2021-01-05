@@ -12,12 +12,14 @@ public class Room {
   private String code;
   private int size;
   private final List<Request> requests;
+  private double votePercentToPlay;
 
   public static Room newRoom() {
     Room r = new Room();
     r.setSize(1);
     r.setCode(RandomStringUtils.randomAlphabetic(4).toUpperCase());
     r.syncToDatabase();
+    r.setVotePercentToPlay(0.6);
     return r;
   }
 
@@ -66,5 +68,13 @@ public class Room {
 
   public void setSize(int size) {
     this.size = size;
+  }
+
+  public double getVotePercentToPlay() {
+    return votePercentToPlay;
+  }
+
+  public void setVotePercentToPlay(double votePercentToPlay) {
+    this.votePercentToPlay = votePercentToPlay;
   }
 }
