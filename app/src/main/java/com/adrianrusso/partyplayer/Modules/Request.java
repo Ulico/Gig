@@ -1,5 +1,7 @@
 package com.adrianrusso.partyplayer.Modules;
 
+import java.util.Objects;
+
 import kaaes.spotify.webapi.android.models.Track;
 
 public class Request {
@@ -37,10 +39,23 @@ public class Request {
   }
 
   public String formattedString() {
-    return track == null ? "" : String.format("%s (%s)", track.name, track.artists.get(0).name);
+    return track == null ? "Loading..." : String.format("%s (%s)", track.name, track.artists.get(0).name);
   }
 
   public void setVotes(int votes) {
     this.votes = votes;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Request request = (Request) o;
+    return Objects.equals(query, request.query);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(query);
   }
 }
