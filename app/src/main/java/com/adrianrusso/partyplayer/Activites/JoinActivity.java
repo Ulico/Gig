@@ -2,7 +2,6 @@ package com.adrianrusso.partyplayer.Activites;
 
 import android.os.Bundle;
 import android.text.InputFilter;
-import android.util.Log;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,7 +24,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -35,11 +36,12 @@ public class JoinActivity extends AppCompatActivity {
   private static Room room;
   private static FirebaseDatabase database;
   private static AlertDialog sendRequestAlert, joinAlert;
+  private static Map<String, Boolean> voted;
 
   private RequestListAdapter requestListAdapter;
   private ListView listView;
   private TextView size;
-  private static Map<String, Boolean> voted;
+  private List<Request> requestsToBeShown;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +55,9 @@ public class JoinActivity extends AppCompatActivity {
     database = FirebaseDatabase.getInstance();
     if (voted == null)
       voted = new HashMap<>();
-
     sendRequestAlert = getSendRequestAlert();
     joinAlert = getJoinAlert();
+    requestsToBeShown = new ArrayList<>();
 
     join.setOnClickListener(v -> joinAlert.show());
     send.setOnClickListener(v -> sendRequestAlert.show());
@@ -67,7 +69,6 @@ public class JoinActivity extends AppCompatActivity {
         room.syncToDatabase();
         voted.put(r.getQuery(), true);
       }
-      Log.d("mine", room.getRequests().get(position).getQuery() + ", " + room.getRequests().get(position).getVotes());
     });
   }
 
@@ -99,7 +100,7 @@ public class JoinActivity extends AppCompatActivity {
     alert.setMessage("Enter request:");
     final EditText input = new EditText(this);
     input.setGravity(Gravity.CENTER);
-    alert.setPositiveButton("Ok", (dialog, whichButton) -> {
+    alert.setPositiveButton("Send", (dialog, whichButton) -> {
       if (room == null) {
         Toast.makeText(this, "Please join room.", Toast.LENGTH_SHORT).show();
       } else {
@@ -117,7 +118,6 @@ public class JoinActivity extends AppCompatActivity {
               }
               room.addRequest(query);
               voted.put(query, true);
-              requestListAdapter.notifyDataSetChanged();
             } else {
               Toast.makeText(JoinActivity.this, "Room not found.", Toast.LENGTH_SHORT).show();
             }
@@ -145,7 +145,6 @@ public class JoinActivity extends AppCompatActivity {
 
     @Override
     public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-      Log.d("mine", "changed");
       addRequestToList(Objects.requireNonNull(snapshot.getValue(Request.class)));
     }
 
@@ -175,15 +174,16 @@ public class JoinActivity extends AppCompatActivity {
       public void onDataChange(@NonNull DataSnapshot snapshot) {
         if (snapshot.hasChild(code)) {
           Toast.makeText(JoinActivity.this, "Joined room.", Toast.LENGTH_SHORT).show();
+
           room = snapshot.child(code).getValue(Room.class);
-          Objects.requireNonNull(room).addPerson();
-          room.syncToDatabase();
-          requestListAdapter = new RequestListAdapter(JoinActivity.this, R.layout.adapter_view_layout, room.getRequests());
+          room.addPerson();
+
+          requestsToBeShown = new ArrayList<>(room.getRequests());
+          requestListAdapter = new RequestListAdapter(JoinActivity.this, R.layout.adapter_view_layout, requestsToBeShown);
           listView.setAdapter(requestListAdapter);
 
-          database.getReference("rooms/" + room.getCode() + "/requests").addChildEventListener(listener);
-
-          database.getReference("rooms/" + room.getCode() + "/size").addValueEventListener(new ValueEventListener() {
+          database.getReference("rooms").child(room.getCode()).child("requests").addChildEventListener(listener);
+          database.getReference("rooms").child(room.getCode()).child("size").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
               if (!snapshot.exists()) {
@@ -212,20 +212,22 @@ public class JoinActivity extends AppCompatActivity {
   }
 
   public void addRequestToList(Request r) {
-
-    for (int i = 0; i < room.getRequests().size(); i++) {
-      if (room.getRequests().get(i).getQuery().equals(r.getQuery())) {
-        room.getRequests().set(i, r);
-        requestListAdapter.notifyDataSetChanged();
-        return;
-      }
+    if (requestsToBeShown.contains(r)) {
+      requestsToBeShown.set(requestsToBeShown.indexOf(r), r);
+    } else {
+      requestsToBeShown.add(r);
     }
-    room.getRequests().add(r);
+    if (room.getRequests().contains(r)) {
+      room.getRequests().set(room.getRequests().indexOf(r), r);
+    } else {
+      room.getRequests().add(r);
+    }
     requestListAdapter.notifyDataSetChanged();
   }
 
   public void removeRequestFromList(Request r) {
     room.getRequests().remove(r);
+    requestsToBeShown.remove(r);
     requestListAdapter.notifyDataSetChanged();
   }
 
@@ -243,7 +245,7 @@ public class JoinActivity extends AppCompatActivity {
   protected void onStop() {
     super.onStop();
     if (room != null) {
-      database.getReference("rooms/" + room.getCode() + "/requests").removeEventListener(listener);
+      database.getReference("rooms").child(room.getCode()).child("requests").removeEventListener(listener);
       room.removePerson();
       room.syncToDatabase();
     }
