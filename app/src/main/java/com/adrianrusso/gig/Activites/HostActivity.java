@@ -2,6 +2,8 @@ package com.adrianrusso.gig.Activites;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,6 +51,7 @@ public class HostActivity extends AppCompatActivity {
   private static SpotifyAppRemote mSpotifyAppRemote;
   private static Room room;
   private static SpotifyApi api;
+  private static boolean keepRoom;
 
   private TextView size;
   private RequestListAdapter requestListAdapter;
@@ -62,6 +65,7 @@ public class HostActivity extends AppCompatActivity {
     api = new SpotifyApi();
     room = Room.newRoom();
     size = findViewById(R.id.size);
+    keepRoom = false;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     requestListAdapter = new RequestListAdapter(this, R.layout.adapter_view_layout, room.getRequests());
 
@@ -221,14 +225,32 @@ public class HostActivity extends AppCompatActivity {
   }
 
   @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.mymenu, menu);
+    return super.onCreateOptionsMenu(menu);
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    int id = item.getItemId();
+    if (id == R.id.mybutton) {
+      keepRoom = true;
+      startActivity(new Intent(HostActivity.this, SettingsActivity.class));
+    }
+    return super.onOptionsItemSelected(item);
+  }
+
+  @Override
   protected void onRestart() {
     super.onRestart();
+    keepRoom = false;
     room.syncToDatabase();
   }
 
   @Override
   protected void onStop() {
     super.onStop();
-    room.destroy();
+    if (!keepRoom)
+      room.destroy();
   }
 }
