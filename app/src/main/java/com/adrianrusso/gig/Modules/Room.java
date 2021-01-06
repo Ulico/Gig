@@ -20,8 +20,8 @@ public class Room {
     Room r = new Room();
     r.setSize(1);
     r.setCode(RandomStringUtils.randomAlphabetic(4).toUpperCase());
-    r.syncToDatabase();
     r.setVotePercentToPlay(DEFAULT_VOTE_PERCENT_TO_PLAY);
+    r.syncToDatabase();
     return r;
   }
 
