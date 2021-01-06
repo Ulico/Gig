@@ -51,7 +51,7 @@ public class HostActivity extends AppCompatActivity {
   private static SpotifyAppRemote mSpotifyAppRemote;
   private static Room room;
   private static SpotifyApi api;
-  private static boolean keepRoom;
+  private static boolean keepRoom, apiConnected;
 
   private TextView size;
   private RequestListAdapter requestListAdapter;
@@ -63,7 +63,8 @@ public class HostActivity extends AppCompatActivity {
 
     clientId = getClientId();
     api = new SpotifyApi();
-    room = Room.newRoom();
+    if (room == null)
+      room = Room.newRoom();
     size = findViewById(R.id.size);
     keepRoom = false;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -76,7 +77,8 @@ public class HostActivity extends AppCompatActivity {
 
     listView.setAdapter(requestListAdapter);
 
-    AuthorizationClient.openLoginActivity(this, REQUEST_CODE, new AuthorizationRequest.Builder(clientId, AuthorizationResponse.Type.TOKEN, REDIRECT_URI).build());
+    if (!apiConnected)
+      AuthorizationClient.openLoginActivity(this, REQUEST_CODE, new AuthorizationRequest.Builder(clientId, AuthorizationResponse.Type.TOKEN, REDIRECT_URI).build());
 
     String stringText = "Room Code: " + room.getCode();
     roomCode.setText(stringText);
@@ -146,7 +148,11 @@ public class HostActivity extends AppCompatActivity {
     database.getReference("rooms").child(room.getCode()).child("size").addValueEventListener(new ValueEventListener() {
       @Override
       public void onDataChange(@NonNull DataSnapshot snapshot) {
-        room.setSize(snapshot.getValue(Integer.class));
+        try {
+          room.setSize(snapshot.getValue(Integer.class));
+        } catch (NullPointerException ignored) {
+
+        }
         size.setText(String.format(Locale.US, "%d", snapshot.getValue(Integer.class)));
       }
 
@@ -217,6 +223,7 @@ public class HostActivity extends AppCompatActivity {
       switch (response.getType()) {
         case TOKEN:
           api.setAccessToken(response.getAccessToken());
+          apiConnected = true;
           break;
         case ERROR:
           break;
@@ -243,14 +250,15 @@ public class HostActivity extends AppCompatActivity {
   @Override
   protected void onRestart() {
     super.onRestart();
-    keepRoom = false;
     room.syncToDatabase();
   }
 
   @Override
   protected void onStop() {
     super.onStop();
-    if (!keepRoom)
+    if (!keepRoom) {
       room.destroy();
+      room = null;
+    }
   }
 }
