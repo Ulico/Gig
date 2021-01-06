@@ -168,7 +168,7 @@ public class JoinActivity extends AppCompatActivity {
     database.getReference("rooms").addListenerForSingleValueEvent(new ValueEventListener() {
       @Override
       public void onDataChange(@NonNull DataSnapshot snapshot) {
-        if (snapshot.hasChild(code)) {
+        if (snapshot.hasChild(code) && !code.equals("")) {
           Toast.makeText(JoinActivity.this, "Joined room.", Toast.LENGTH_SHORT).show();
 
           room = snapshot.child(code).getValue(Room.class);
