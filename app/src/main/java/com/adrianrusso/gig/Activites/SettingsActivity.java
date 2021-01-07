@@ -1,7 +1,6 @@
 package com.adrianrusso.gig.Activites;
 
 import android.os.Bundle;
-import android.util.Log;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,7 +12,6 @@ public class SettingsActivity extends AppCompatActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    Log.d("mine", "create");
     super.onCreate(savedInstanceState);
     setContentView(R.layout.settings_activity);
     if (savedInstanceState == null) {

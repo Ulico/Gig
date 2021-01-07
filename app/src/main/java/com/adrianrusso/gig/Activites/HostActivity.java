@@ -1,7 +1,9 @@
 package com.adrianrusso.gig.Activites;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
@@ -11,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceManager;
 
 import com.adrianrusso.gig.Adapters.RequestListAdapter;
 import com.adrianrusso.gig.Modules.Request;
@@ -52,6 +55,7 @@ public class HostActivity extends AppCompatActivity {
   private static Room room;
   private static SpotifyApi api;
   private static boolean keepRoom, apiConnected;
+  private static SharedPreferences prefs;
 
   private TextView size;
   private RequestListAdapter requestListAdapter;
@@ -62,13 +66,15 @@ public class HostActivity extends AppCompatActivity {
     setContentView(R.layout.activity_host);
 
     clientId = getClientId();
-    api = new SpotifyApi();
+    if (api == null)
+      api = new SpotifyApi();
     if (room == null)
       room = Room.newRoom();
     size = findViewById(R.id.size);
     keepRoom = false;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     requestListAdapter = new RequestListAdapter(this, R.layout.adapter_view_layout, room.getRequests());
+    prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
     size.setText("1");
 
@@ -86,6 +92,7 @@ public class HostActivity extends AppCompatActivity {
     database.getReference("rooms").child(room.getCode()).child("requests").addChildEventListener(new ChildEventListener() {
       @Override
       public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+        Log.d("mine", "addied");
         Request r = Objects.requireNonNull(snapshot.getValue(Request.class));
         if (r.getTrack() == null) {
           api.getService().searchTracks(r.getQuery(), new Callback<TracksPager>() {
@@ -127,6 +134,7 @@ public class HostActivity extends AppCompatActivity {
 
       @Override
       public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+        Log.d("mine", "removed");
         Request r = snapshot.getValue(Request.class);
         assert r != null;
         if (r.getTrack() != null)
@@ -161,7 +169,24 @@ public class HostActivity extends AppCompatActivity {
 
       }
     });
+
+    SharedPreferences.OnSharedPreferenceChangeListener onSharedPreferenceChangeListener = (sharedPreferences, key) -> {
+      if (key.equals("votePercentToPlay")) {
+        int v = 0;
+        try {
+          v = Integer.parseInt(sharedPreferences.getString("votePercentToPlay", "50"));
+          room.setVotePercentToPlay(v / 100.0);
+          room.syncToDatabase();
+        } catch (NumberFormatException e) {
+          Toast.makeText(this, "Please enter a valid percent.", Toast.LENGTH_SHORT).show();
+          sharedPreferences.edit().putString("votePercentToPlay", (int) (100 * room.getVotePercentToPlay()) + "").apply();
+        }
+      }
+    };
+
+    prefs.registerOnSharedPreferenceChangeListener(onSharedPreferenceChangeListener);
   }
+
 
   public String getClientId() {
     try {
