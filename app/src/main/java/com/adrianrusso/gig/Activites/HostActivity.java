@@ -66,15 +66,15 @@ public class HostActivity extends AppCompatActivity {
     setContentView(R.layout.activity_host);
 
     clientId = getClientId();
+    prefs = PreferenceManager.getDefaultSharedPreferences(this);
     if (api == null)
       api = new SpotifyApi();
     if (room == null)
-      room = Room.newRoom();
+      room = Room.newRoom(prefs);
     size = findViewById(R.id.size);
     keepRoom = false;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     requestListAdapter = new RequestListAdapter(this, R.layout.adapter_view_layout, room.getRequests());
-    prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
     size.setText("1");
 
@@ -89,67 +89,7 @@ public class HostActivity extends AppCompatActivity {
     String stringText = "Room Code: " + room.getCode();
     roomCode.setText(stringText);
 
-    database.getReference("rooms").child(room.getCode()).child("requests").addChildEventListener(new ChildEventListener() {
-      @Override
-      public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-        Log.d("mine", "addied");
-        Request r = Objects.requireNonNull(snapshot.getValue(Request.class));
-        if (r.getTrack() == null) {
-          api.getService().searchTracks(r.getQuery(), new Callback<TracksPager>() {
-            @Override
-            public void success(TracksPager tracksPager, Response response) {
-              Track track = tracksPager.tracks.items.get(0);
-              r.setTrack(track);
-              for (Request r : room.getRequests()) {
-                if (r.getTrack().name.equals(track.name)) {
-                  snapshot.getRef().removeValue();
-                  return;
-                }
-              }
-              addRequestToList(r);
-
-              snapshot.child("track").getRef().setValue(track);
-            }
-
-            @Override
-            public void failure(RetrofitError error) {
-            }
-          });
-        } else {
-          requestListAdapter.notifyDataSetChanged();
-        }
-      }
-
-      @Override
-      public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-        Request r = snapshot.getValue(Request.class);
-        if (room.getRequests().contains(r)) {
-          room.getRequests().set(room.getRequests().indexOf(r), r);
-          if (r.getVotes() >= room.getVotePercentToPlay() * room.getSize()) {
-            playOrCue(r.getTrack());
-          }
-          requestListAdapter.notifyDataSetChanged();
-        }
-      }
-
-      @Override
-      public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-        Log.d("mine", "removed");
-        Request r = snapshot.getValue(Request.class);
-        assert r != null;
-        if (r.getTrack() != null)
-          removeRequestFromList(r);
-      }
-
-      @Override
-      public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
-      }
-
-      @Override
-      public void onCancelled(@NonNull DatabaseError error) {
-      }
-    });
+    database.getReference("rooms").child(room.getCode()).child("requests").addChildEventListener(listener);
 
     listView.setOnItemClickListener((parent, view, position, id) -> playOrCue(room.getRequests().get(position).getTrack()));
 
@@ -226,6 +166,68 @@ public class HostActivity extends AppCompatActivity {
     });
   }
 
+  ChildEventListener listener = new ChildEventListener() {
+    @Override
+    public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+      Log.d("mine", "addied");
+      Request r = Objects.requireNonNull(snapshot.getValue(Request.class));
+      if (r.getTrack() == null) {
+        api.getService().searchTracks(r.getQuery(), new Callback<TracksPager>() {
+          @Override
+          public void success(TracksPager tracksPager, Response response) {
+            Track track = tracksPager.tracks.items.get(0);
+            r.setTrack(track);
+            for (Request r : room.getRequests()) {
+              if (r.getTrack().name.equals(track.name)) {
+                snapshot.getRef().removeValue();
+                return;
+              }
+            }
+            addRequestToList(r);
+
+            snapshot.child("track").getRef().setValue(track);
+          }
+
+          @Override
+          public void failure(RetrofitError error) {
+          }
+        });
+      } else {
+        requestListAdapter.notifyDataSetChanged();
+      }
+    }
+
+    @Override
+    public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+      Request r = snapshot.getValue(Request.class);
+      if (room.getRequests().contains(r)) {
+        room.getRequests().set(room.getRequests().indexOf(r), r);
+        if (r.getVotes() >= room.getVotePercentToPlay() * room.getSize()) {
+          playOrCue(r.getTrack());
+        }
+        requestListAdapter.notifyDataSetChanged();
+      }
+    }
+
+    @Override
+    public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+      Log.d("mine", "removed");
+      Request r = snapshot.getValue(Request.class);
+      assert r != null;
+      if (r.getTrack() != null)
+        removeRequestFromList(r);
+    }
+
+    @Override
+    public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+    }
+
+    @Override
+    public void onCancelled(@NonNull DatabaseError error) {
+    }
+  };
+
   private void playOrCue(Track track) {
     mSpotifyAppRemote.getPlayerApi().getPlayerState().setResultCallback(playerState -> {
       try {
@@ -281,6 +283,7 @@ public class HostActivity extends AppCompatActivity {
   @Override
   protected void onStop() {
     super.onStop();
+    FirebaseDatabase.getInstance().getReference("rooms").child(room.getCode()).child("requests").removeEventListener(listener);
     if (!keepRoom) {
       room.destroy();
       room = null;
