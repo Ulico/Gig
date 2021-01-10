@@ -1,5 +1,8 @@
 package com.adrianrusso.gig.Modules;
 
+import android.content.SharedPreferences;
+import android.util.Log;
+
 import com.google.firebase.database.FirebaseDatabase;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -16,11 +19,11 @@ public class Room {
 
   public final static double DEFAULT_VOTE_PERCENT_TO_PLAY = 0.5;
 
-  public static Room newRoom() {
+  public static Room newRoom(SharedPreferences prefs) {
     Room r = new Room();
     r.setSize(1);
     r.setCode(RandomStringUtils.randomAlphabetic(4).toUpperCase());
-    r.setVotePercentToPlay(DEFAULT_VOTE_PERCENT_TO_PLAY);
+    r.setVotePercentToPlay(0.01 * Double.parseDouble(prefs.getString("votePercentToPlay", String.valueOf(DEFAULT_VOTE_PERCENT_TO_PLAY * 100))));
     r.syncToDatabase();
     return r;
   }
@@ -78,5 +81,6 @@ public class Room {
 
   public void setVotePercentToPlay(double votePercentToPlay) {
     this.votePercentToPlay = votePercentToPlay;
+    Log.d("mine", votePercentToPlay + "");
   }
 }
